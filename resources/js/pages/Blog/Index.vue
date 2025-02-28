@@ -64,7 +64,7 @@ const props = defineProps<Props>();
             class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow duration-300">
           <!-- Featured image -->
           <div v-if="post.featured_image" class="h-48 overflow-hidden">
-            <img :src="post.featured_image" :alt="post.title" class="w-full h-full object-cover" />
+            <img :src="/storage/ + post.featured_image" :alt="post.title" class="w-full h-full object-cover" />
           </div>
           <div v-else class="h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
             <span class="text-gray-400 dark:text-gray-500">No image</span>

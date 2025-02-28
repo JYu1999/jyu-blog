@@ -40,7 +40,10 @@ const props = defineProps<Props>();
 
 // Convert markdown to HTML
 const renderedContent = computed(() => {
-  return props.post && props.post.content ? marked(props.post.content, { breaks: true }) : '';
+  return props.post && props.post.content ? marked(props.post.content, { 
+    breaks: true,
+    gfm: true // Enable GitHub Flavored Markdown
+  }) : '';
 });
 </script>
 
@@ -76,7 +79,7 @@ const renderedContent = computed(() => {
         
         <!-- Featured image -->
         <div v-if="post.featured_image" class="mb-8 max-h-96 overflow-hidden rounded-lg">
-          <img :src="post.featured_image" :alt="post.title" class="w-full object-cover" />
+          <img :src="/storage/ + post.featured_image" :alt="post.title" class="w-full object-cover" />
         </div>
       </header>
       
@@ -127,7 +130,12 @@ const renderedContent = computed(() => {
 }
 
 .prose pre {
-  @apply bg-gray-800 text-gray-100 dark:bg-gray-900 dark:text-gray-100 p-4 rounded-md overflow-x-auto;
+  @apply bg-gray-800 text-gray-100 dark:bg-gray-900 dark:text-gray-100 p-4 rounded-md overflow-x-auto my-4;
+}
+
+/* Fix code blocks rendering issue */
+.prose pre code {
+  @apply bg-transparent p-0 text-gray-100 dark:text-gray-100 inline-block w-full;
 }
 
 .prose code {

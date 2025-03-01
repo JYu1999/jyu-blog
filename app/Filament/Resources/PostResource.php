@@ -146,6 +146,13 @@ class PostResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('viewOnWebsite')
+                    ->label('View')
+                    ->icon('heroicon-o-globe-alt')
+                    ->color('success')
+                    ->url(fn (Post $record) => route('blog.show', $record->slug))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Post $record) => $record->status === 'published'),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

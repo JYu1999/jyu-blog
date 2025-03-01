@@ -28,11 +28,36 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      # Set up Laravel environment
+      - name: Create SQLite Database
+        run: touch database/database.sqlite
+      
+      - name: Copy Environment File
+        run: cp .env.example .env
+      
+      - name: Update .env for GitHub Actions
+        run: |
+          echo "APP_ENV=testing" >> .env
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=:memory:" >> .env
+      
+      - name: Generate Application Key
+        run: php artisan key:generate
+      
+      - name: Run Migrations
+        run: php artisan migrate --force
+      
+      - name: Build Assets
+        run: npm run build
+      
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
         run: npx playwright test
+        env:
+          CI: true
+          APP_ENV: testing
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

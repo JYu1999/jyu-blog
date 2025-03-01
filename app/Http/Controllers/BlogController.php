@@ -15,7 +15,7 @@ class BlogController extends Controller
         $posts = Post::with(['category'])
             ->where('status', 'published')
             ->orderBy('created_at', 'desc')
-            ->paginate(9);
+            ->paginate(12);
             
         return Inertia::render('Blog/Index', [
             'posts' => $posts,
@@ -44,7 +44,7 @@ class BlogController extends Controller
             ->where('category_id', $category->id)
             ->where('status', 'published')
             ->orderBy('created_at', 'desc')
-            ->paginate(9);
+            ->paginate(12);
             
         return Inertia::render('Blog/Category', [
             'category' => $category,
@@ -60,7 +60,7 @@ class BlogController extends Controller
             ->with(['category'])
             ->where('status', 'published')
             ->orderBy('created_at', 'desc')
-            ->paginate(9);
+            ->paginate(12);
             
         return Inertia::render('Blog/Tag', [
             'tag' => $tag,

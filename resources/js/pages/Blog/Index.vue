@@ -120,18 +120,44 @@ const props = defineProps<Props>();
       </Card>
 
       <!-- Pagination -->
-      <div v-if="posts && posts.meta && posts.meta.last_page > 1" class="mt-16 flex justify-center">
+      <div v-if="posts && posts.last_page > 1" class="mt-16 flex justify-center">
         <nav class="flex items-center space-x-2 p-2 rounded-lg bg-card shadow-sm">
+          <!-- Previous page button -->
           <Button 
-            v-for="page in posts.meta.last_page" 
-            :key="page"
+            v-if="posts.prev_page_url"
             :as="Link"
-            :href="route('blog.index', { page })"
-            :variant="page === posts.meta.current_page ? 'default' : 'ghost'"
+            :href="posts.prev_page_url"
+            variant="outline"
             size="sm"
-            class="w-10 h-10 rounded-md"
+            class="w-auto px-3 rounded-md"
           >
-            {{ page }}
+            &larr; 上一頁
+          </Button>
+          
+          <!-- Page numbers -->
+          <template v-if="posts.links && posts.links.length">
+            <Button 
+              v-for="(link, i) in posts.links.filter(link => !link.label.includes('Previous') && !link.label.includes('Next'))" 
+              :key="i"
+              :as="Link"
+              :href="link.url"
+              :variant="link.active ? 'default' : 'ghost'"
+              size="sm"
+              class="w-10 h-10 rounded-md"
+              v-html="link.label"
+            />
+          </template>
+          
+          <!-- Next page button -->
+          <Button 
+            v-if="posts.next_page_url"
+            :as="Link"
+            :href="posts.next_page_url"
+            variant="outline"
+            size="sm"
+            class="w-auto px-3 rounded-md"
+          >
+            下一頁 &rarr;
           </Button>
         </nav>
       </div>

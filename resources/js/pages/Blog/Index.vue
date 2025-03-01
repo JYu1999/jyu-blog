@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface Post {
   id: number;
@@ -50,74 +53,86 @@ const props = defineProps<Props>();
   </Head>
 
   <DefaultLayout>
-    <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">JYu's Blog</h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300">
+    <div class="container mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <!-- Hero section -->
+      <div class="text-center mb-16 max-w-3xl mx-auto">
+        <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">JYu's Blog</h1>
+        <p class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
           Welcome to my personal blog, where I share thoughts, projects, and insights.
         </p>
       </div>
 
       <!-- Posts grid -->
       <div v-if="posts && posts.data && posts.data.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="post in posts.data" :key="post.id" 
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow duration-300">
+        <Card v-for="post in posts.data" :key="post.id" 
+            class="overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 rounded-xl border-none bg-card">
           <!-- Featured image -->
-          <div v-if="post.featured_image" class="h-48 overflow-hidden">
-            <img :src="/storage/ + post.featured_image" :alt="post.title" class="w-full h-full object-cover" />
+          <div v-if="post.featured_image" class="h-56 overflow-hidden">
+            <img :src="/storage/ + post.featured_image" :alt="post.title" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
           </div>
-          <div v-else class="h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <span class="text-gray-400 dark:text-gray-500">No image</span>
+          <div v-else class="h-56 bg-gradient-to-br from-primary/5 to-primary/20 dark:from-primary/10 dark:to-primary/30 flex items-center justify-center">
+            <Avatar class="h-20 w-20 bg-primary/20 text-primary dark:bg-primary/30">
+              <AvatarFallback class="text-2xl font-semibold">{{ post.title.substring(0, 2).toUpperCase() }}</AvatarFallback>
+            </Avatar>
           </div>
 
           <!-- Post content -->
-          <div class="p-6 flex-grow flex flex-col">
+          <CardContent class="p-6 lg:p-8 flex-grow flex flex-col">
             <!-- Category -->
-            <div v-if="post.category" class="mb-2">
-              <Link :href="route('blog.category', post.category.slug)" 
-                  class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            <div v-if="post.category" class="mb-3">
+              <Button 
+                :as="Link" 
+                :href="route('blog.category', post.category.slug)" 
+                variant="outline"
+                size="sm"
+                class="rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary text-xs"
+              >
                 {{ post.category.name }}
-              </Link>
+              </Button>
             </div>
 
             <!-- Title -->
-            <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">
-              <Link :href="route('blog.show', post.slug)" class="hover:text-blue-600 dark:hover:text-blue-400">
+            <h2 class="text-2xl font-bold mb-3 text-card-foreground line-clamp-2">
+              <Link :href="route('blog.show', post.slug)" class="hover:text-primary transition-colors">
                 {{ post.title }}
               </Link>
             </h2>
 
             <!-- Summary -->
-            <p class="text-gray-600 dark:text-gray-300 mb-4 flex-grow">
+            <p class="text-muted-foreground mb-5 flex-grow line-clamp-3 text-base">
               {{ post.summary || 'No summary available.' }}
             </p>
 
-            <!-- Meta info -->
-            <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-auto">
-              <span>{{ new Date(post.created_at).toLocaleDateString() }}</span>
-              <span>{{ post.views }} views</span>
+            <!-- Meta info and read more - Changed to display updated_at -->
+            <div class="flex justify-between items-center text-sm mt-auto pt-4 border-t border-muted/60">
+              <span class="text-muted-foreground">Last updated: {{ new Date(post.updated_at).toLocaleDateString() }}</span>
+              <span class="text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full text-xs">{{ post.views }} views</span>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Empty state -->
-      <div v-else class="text-center py-12">
-        <p class="text-gray-600 dark:text-gray-300 text-lg">No posts found. Check back soon!</p>
-      </div>
+      <Card v-else class="text-center py-16 bg-muted/20 rounded-xl border-dashed">
+        <CardContent>
+          <p class="text-muted-foreground text-xl">No posts found. Check back soon!</p>
+        </CardContent>
+      </Card>
 
       <!-- Pagination -->
-      <div v-if="posts && posts.meta && posts.meta.last_page > 1" class="mt-12 flex justify-center">
-        <nav class="flex items-center space-x-2">
-          <Link v-for="page in posts.meta.last_page" :key="page"
-              :href="route('blog.index', { page })"
-              class="px-4 py-2 rounded-md"
-              :class="{
-                'bg-blue-600 text-white': page === posts.meta.current_page,
-                'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600': page !== posts.meta.current_page
-              }">
+      <div v-if="posts && posts.meta && posts.meta.last_page > 1" class="mt-16 flex justify-center">
+        <nav class="flex items-center space-x-2 p-2 rounded-lg bg-card shadow-sm">
+          <Button 
+            v-for="page in posts.meta.last_page" 
+            :key="page"
+            :as="Link"
+            :href="route('blog.index', { page })"
+            :variant="page === posts.meta.current_page ? 'default' : 'ghost'"
+            size="sm"
+            class="w-10 h-10 rounded-md"
+          >
             {{ page }}
-          </Link>
+          </Button>
         </nav>
       </div>
     </div>

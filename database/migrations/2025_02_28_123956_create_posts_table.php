@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('summary')->nullable();
             $table->string('featured_image')->nullable();
             $table->foreignId('category_id')->nullable();
-            $table->enum('status', ['published', 'draft', 'deleted'])->default('draft');
+            $table->enum('status', ['published', 'draft'])->default('draft');
             $table->integer('views')->default(0);
             $table->timestamps();
             $table->softDeletes();

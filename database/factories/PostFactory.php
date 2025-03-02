@@ -29,6 +29,8 @@ class PostFactory extends Factory
             'locale' => fake()->randomElement(['zh', 'zh-CN', 'ja', 'vi', 'en']),
             'status' => fake()->randomElement(['published', 'draft']),
             'views' => fake()->numberBetween(0, 1000),
+            'created_at' => fake()->dateTimeThisYear(),
+            'updated_at' => fake()->dateTimeThisYear(),
         ];
     }
 

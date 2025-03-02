@@ -70,21 +70,19 @@ import { ref, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Icon from '@/components/Icon.vue';
+import LanguageSelector from '@/components/LanguageSelector.vue';
+import { useLanguage } from '@/composables/useLanguage';
 
 // Use props.filters as defaults or set defaults if not provided
 const sort = ref(props.filters?.sort || 'updated');
 const direction = ref(props.filters?.direction || 'desc');
 const search = ref(props.filters?.search || '');
 const viewMode = ref(props.filters?.view || 'gallery');
-const currentLang = ref(props.filters?.locale || 'en'); // Default language
+
+// Use the language composable
+const { currentLang } = useLanguage();
 
 // Check if code is running in browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -104,16 +102,6 @@ onMounted(() => {
     const savedViewMode = localStorage.getItem('blogViewMode');
     if (savedViewMode) {
       viewMode.value = savedViewMode;
-    }
-    
-    // Load locale from localStorage if exists
-    const savedLocale = localStorage.getItem('locale');
-    if (savedLocale) {
-      currentLang.value = savedLocale;
-      document.documentElement.lang = savedLocale;
-    } else {
-      // Use browser language as fallback or the HTML lang attribute
-      currentLang.value = document.documentElement.lang || 'en';
     }
   }
 });
@@ -155,15 +143,7 @@ const toggleSortDirection = () => {
   applyFilters();
 };
 
-// Update locale and apply filters
-const updateLocale = (locale: string) => {
-  currentLang.value = locale;
-  if (isBrowser) {
-    localStorage.setItem('locale', locale);
-    document.documentElement.lang = locale;
-  }
-  applyFilters();
-};
+// Language is now handled by useLanguage composable
 
 const navigateToPost = (slug: string) => {
   window.location.href = route('blog.show', slug);
@@ -219,35 +199,7 @@ const navigateToPost = (slug: string) => {
           
           <!-- Language selector -->
           <div class="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <Button variant="outline" size="sm" class="gap-2">
-                  <span v-if="currentLang === 'en'">🇺🇸 English</span>
-                  <span v-else-if="currentLang === 'zh'">🇹🇼 繁體中文</span>
-                  <span v-else-if="currentLang === 'zh-CN'">🇨🇳 简体中文</span>
-                  <span v-else-if="currentLang === 'ja'">🇯🇵 日本語</span>
-                  <span v-else-if="currentLang === 'vi'">🇻🇳 Tiếng Việt</span>
-                  <span v-else>🌐 Language</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="() => updateLocale('en')">
-                  🇺🇸 English
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="() => updateLocale('zh')">
-                  🇹🇼 繁體中文
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="() => updateLocale('zh-CN')">
-                  🇨🇳 简体中文
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="() => updateLocale('ja')">
-                  🇯🇵 日本語
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="() => updateLocale('vi')">
-                  🇻🇳 Tiếng Việt
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <LanguageSelector />
           </div>
         </div>
         

@@ -80,6 +80,33 @@ return [
 
     'locale' => env('APP_LOCALE', 'en'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Application Supported Locales
+    |--------------------------------------------------------------------------
+    |
+    | The supported locales determines the locales that are available for
+    | selection in the application. A user can select any of these to
+    | view the content in their preferred language.
+    |
+    */
+
+    'supported_locales' => [
+        'en' => 'English',
+        'zh' => '繁體中文',
+        'zh-CN' => '简体中文',
+        'ja' => '日本語',
+        'vi' => 'Tiếng Việt',
+    ],
+    
+    'available_locales' => [
+        'en' => 'English',
+        'zh' => '繁體中文',
+        'zh-CN' => '简体中文',
+        'ja' => '日本語',
+        'vi' => 'Tiếng Việt',
+    ],
+
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

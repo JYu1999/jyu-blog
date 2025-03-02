@@ -21,6 +21,8 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable();
             $table->enum('status', ['published', 'draft'])->default('draft');
             $table->integer('views')->default(0);
+            $table->string('locale', 10)->default('en');
+            $table->foreignId('original_post_id')->nullable()->comment('Reference to the original post when this is a translation');
             $table->timestamps();
             $table->timestamp('content_updated_at')->nullable();
             $table->softDeletes();

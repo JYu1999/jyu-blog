@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { marked } from 'marked';
 import { computed, onMounted, ref } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 interface Props {
   title: string;
@@ -13,6 +20,28 @@ interface Props {
 const props = defineProps<Props>();
 const tableOfContents = ref<{id: string, text: string, level: number}[]>([]);
 const activeHeading = ref<string | null>(null);
+
+// Get translations reactively
+const page = usePage();
+const translations = computed(() => page.props.translations);
+
+// For language selector
+const currentLang = ref(page.props.locale || 'en');
+
+// Update locale and reload page
+const updateLocale = (locale: string) => {
+  currentLang.value = locale;
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('locale', locale);
+    document.documentElement.lang = locale;
+  }
+  
+  // Reload with new locale
+  router.get(route('about'), { locale }, {
+    preserveState: true,
+    replace: true
+  });
+};
 
 // Convert markdown to HTML
 const renderedContent = computed(() => {
@@ -70,6 +99,39 @@ onMounted(() => {
 
   <DefaultLayout>
     <div class="container mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-end mb-4">
+        <!-- Language selector -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" size="sm" class="gap-2">
+              <span v-if="currentLang === 'en'">🇺🇸 English</span>
+              <span v-else-if="currentLang === 'zh'">🇹🇼 繁體中文</span>
+              <span v-else-if="currentLang === 'zh-CN'">🇨🇳 简体中文</span>
+              <span v-else-if="currentLang === 'ja'">🇯🇵 日本語</span>
+              <span v-else-if="currentLang === 'vi'">🇻🇳 Tiếng Việt</span>
+              <span v-else>🌐 {{ translations?.blog?.language || 'Language' }}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem @click="() => updateLocale('en')">
+              🇺🇸 English
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="() => updateLocale('zh')">
+              🇹🇼 繁體中文
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="() => updateLocale('zh-CN')">
+              🇨🇳 简体中文
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="() => updateLocale('ja')">
+              🇯🇵 日本語
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="() => updateLocale('vi')">
+              🇻🇳 Tiếng Việt
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">{{ title }}</h1>
       </div>

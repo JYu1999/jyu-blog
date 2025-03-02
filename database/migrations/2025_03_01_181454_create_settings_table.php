@@ -13,11 +13,15 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->string('key')->unique();
+            $table->string('key');
             $table->text('value')->nullable();
             $table->string('type')->default('string');
             $table->text('description')->nullable();
+            $table->string('locale')->default('en');
             $table->timestamps();
+            
+            // Composite unique key for localized settings
+            $table->unique(['key', 'locale']);
         });
     }
 

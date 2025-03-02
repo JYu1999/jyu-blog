@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { marked } from 'marked';
 import { ref, computed, onMounted } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+
+// Get translations reactively
+const page = usePage();
+const translations = computed(() => page.props.translations);
 
 interface Tag {
   id: number;
@@ -122,9 +126,9 @@ onMounted(() => {
         
         <!-- Meta info - Using relative_updated_at from backend -->
         <div class="text-sm text-muted-foreground mb-8 bg-muted/50 inline-block px-4 py-1.5 rounded-full">
-          <span>Last updated: {{ post.relative_updated_at }}</span>
+          <span>{{ translations.blog.last_updated }} {{ post.relative_updated_at }}</span>
           <span class="mx-2">•</span>
-          <span>{{ post.views }} views</span>
+          <span>{{ post.views }} {{ translations.blog.views }}</span>
         </div>
         
         <!-- Featured image -->
@@ -149,7 +153,7 @@ onMounted(() => {
             <!-- Tags -->
             <div v-if="post.tags && post.tags.length > 0" class="mt-12">
               <Separator class="my-6" />
-              <h2 class="text-lg font-semibold text-card-foreground mb-4">Tags</h2>
+              <h2 class="text-lg font-semibold text-card-foreground mb-4">{{ translations.blog.tag }}</h2>
               <div class="flex flex-wrap gap-2">
                 <Button 
                   v-for="tag in post.tags" 
@@ -170,7 +174,7 @@ onMounted(() => {
         <!-- Table of Contents (Desktop) - Now on the right side -->
         <div v-if="tableOfContents.length > 0" class="w-64 hidden lg:block sticky top-24 self-start">
           <div class="rounded-lg bg-card p-4 shadow-sm border">
-            <h3 class="text-lg font-semibold mb-3 text-card-foreground">Contents</h3>
+            <h3 class="text-lg font-semibold mb-3 text-card-foreground">{{ translations.blog.contents || 'Contents' }}</h3>
             <nav class="toc">
               <ul class="space-y-2">
                 <li v-for="heading in tableOfContents" :key="heading.id" 
@@ -197,7 +201,7 @@ onMounted(() => {
           size="lg"
           class="mt-4"
         >
-          &larr; Back to all articles
+          &larr; {{ translations.blog.back_to_all }}
         </Button>
       </div>
     </article>

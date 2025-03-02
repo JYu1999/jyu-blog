@@ -25,17 +25,28 @@ class Settings extends Page implements HasForms
     
     public ?string $about_title = '';
     public ?string $about_content = '';
+    public ?string $locale = 'en';
+    
+    protected function getFormStatePath(): ?string
+    {
+        return 'data';
+    }
     
     public function mount(): void
     {
+        $this->locale = request()->query('locale', app()->getLocale());
+        
         $this->form->fill([
-            'about_title' => Setting::getValue('about_title', 'About Me'),
-            'about_content' => Setting::getValue('about_content', ''),
+            'about_title' => Setting::getValue('about_title', 'About Me', $this->locale),
+            'about_content' => Setting::getValue('about_content', '', $this->locale),
+            'locale' => $this->locale,
         ]);
     }
     
     public function form(Form $form): Form
     {
+        $localeOptions = config('app.available_locales', ['en' => 'English']);
+        
         return $form
             ->schema([
                 TextInput::make('about_title')
@@ -45,6 +56,19 @@ class Settings extends Page implements HasForms
                     ->label('About Page Content')
                     ->required()
                     ->columnSpanFull(),
+                \Filament\Forms\Components\Select::make('locale')
+                    ->label('Language')
+                    ->options($localeOptions)
+                    ->default(app()->getLocale())
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, $set) {
+                        // When locale changes, fetch content for that locale
+                        $title = Setting::getValue('about_title', 'About Me', $state);
+                        $content = Setting::getValue('about_content', '', $state);
+                        
+                        $set('about_title', $title);
+                        $set('about_content', $content);
+                    }),
             ]);
     }
     
@@ -52,8 +76,21 @@ class Settings extends Page implements HasForms
     {
         $data = $this->form->getState();
         
-        Setting::setValue('about_title', $data['about_title'], 'string', 'About page title');
-        Setting::setValue('about_content', $data['about_content'], 'string', 'About page content');
+        Setting::setValue(
+            'about_title', 
+            $data['about_title'], 
+            'string', 
+            'About page title',
+            $data['locale']
+        );
+        
+        Setting::setValue(
+            'about_content', 
+            $data['about_content'], 
+            'string', 
+            'About page content',
+            $data['locale']
+        );
         
         Notification::make()
             ->title('Settings saved successfully')

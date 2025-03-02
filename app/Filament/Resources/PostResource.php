@@ -67,7 +67,7 @@ class PostResource extends Resource
                 
                 Forms\Components\Group::make()
                     ->schema([
-                        Forms\Components\Section::make('Status')
+                        Forms\Components\Section::make('Status & Language')
                             ->schema([
                                 Forms\Components\Select::make('status')
                                     ->options([
@@ -77,6 +77,31 @@ class PostResource extends Resource
                                     ])
                                     ->default('draft')
                                     ->required(),
+                                
+                                Forms\Components\Select::make('locale')
+                                    ->label('Language')
+                                    ->options([
+                                        'en' => 'English',
+                                        'zh' => '繁體中文',
+                                        'zh-CN' => '简体中文',
+                                        'ja' => '日本語',
+                                        'vi' => 'Tiếng Việt',
+                                    ])
+                                    ->default('en')
+                                    ->required(),
+                                
+                                Forms\Components\Select::make('original_post_id')
+                                    ->label('Original Post (if this is a translation)')
+                                    ->relationship('originalPost', 'title')
+                                    ->searchable()
+                                    ->preload()
+                                    ->options(function (callable $get, ?Post $record) {
+                                        // Exclude current post and posts that are translations
+                                        return Post::where('id', '!=', $record?->id ?? 0)
+                                            ->whereNull('original_post_id')
+                                            ->pluck('title', 'id')
+                                            ->toArray();
+                                    }),
                                 
                                 Forms\Components\Placeholder::make('created_at')
                                     ->label('Created at')
@@ -108,6 +133,26 @@ class PostResource extends Resource
                     ->searchable()
                     ->sortable(),
                 
+                Tables\Columns\TextColumn::make('locale')
+                    ->label('Language')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'en' => 'English',
+                        'zh' => '繁體中文',
+                        'zh-CN' => '简体中文',
+                        'ja' => '日本語',
+                        'vi' => 'Tiếng Việt',
+                        default => $state,
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'en' => 'info',
+                        'zh' => 'success',
+                        'zh-CN' => 'success',
+                        'ja' => 'warning',
+                        'vi' => 'danger',
+                        default => 'gray',
+                    }),
+                
                 Tables\Columns\TextColumn::make('category.name')
                     ->sortable(),
                 
@@ -121,6 +166,11 @@ class PostResource extends Resource
                 
                 Tables\Columns\TextColumn::make('views')
                     ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('originalPost.title')
+                    ->label('Translation of')
+                    ->default('-')
+                    ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -139,8 +189,26 @@ class PostResource extends Resource
                         'deleted' => 'Deleted',
                     ]),
                 
+                Tables\Filters\SelectFilter::make('locale')
+                    ->label('Language')
+                    ->options([
+                        'en' => 'English',
+                        'zh' => '繁體中文',
+                        'zh-CN' => '简体中文',
+                        'ja' => '日本語',
+                        'vi' => 'Tiếng Việt',
+                    ]),
+                
                 Tables\Filters\SelectFilter::make('category')
                     ->relationship('category', 'name'),
+                    
+                Tables\Filters\Filter::make('translations')
+                    ->label('Show only translations')
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('original_post_id')),
+
+                Tables\Filters\Filter::make('original_posts')
+                    ->label('Show only original posts')
+                    ->query(fn (Builder $query): Builder => $query->whereNull('original_post_id')),
                 
                 Tables\Filters\TrashedFilter::make(),
             ])

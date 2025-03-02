@@ -21,6 +21,8 @@ class Post extends Model
         'category_id',
         'status',
         'views',
+        'locale',
+        'original_post_id',
     ];
 
     protected $casts = [
@@ -29,6 +31,7 @@ class Post extends Model
     ];
 
     protected $appends = [
+        'relative_updated_at',
         'relative_content_updated_at',
     ];
 
@@ -40,8 +43,14 @@ class Post extends Model
         'featured_image',
         'category_id',
         'status',
+        'locale',
     ];
 
+
+    public function getRelativeUpdatedAtAttribute()
+    {
+        return $this->content_updated_at ? $this->content_updated_at->diffForHumans() : null;
+    }
     public function getRelativeContentUpdatedAtAttribute()
     {
         return $this->content_updated_at ? $this->content_updated_at->diffForHumans() : null;
@@ -71,6 +80,21 @@ class Post extends Model
     public function scopeDrafts($query)
     {
         return $query->where('status', 'draft');
+    }
+    
+    public function scopeLocale($query, $locale)
+    {
+        return $query->where('locale', $locale);
+    }
+    
+    public function translations()
+    {
+        return $this->hasMany(Post::class, 'original_post_id');
+    }
+    
+    public function originalPost()
+    {
+        return $this->belongsTo(Post::class, 'original_post_id');
     }
 
     // 重寫父類別的 save 方法，使得內容相關欄位的更新會觸發 content_updated_at 的更新

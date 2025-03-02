@@ -26,7 +26,7 @@ class PostFactory extends Factory
             'slug' => $slug,
             'content' => fake()->paragraphs(5, true),
             'summary' => fake()->paragraph(),
-            'featured_image' => fake()->imageUrl(1200, 630),
+            'locale' => fake()->randomElement(['zh', 'zh-CN', 'ja', 'vi', 'en']),
             'status' => fake()->randomElement(['published', 'draft']),
             'views' => fake()->numberBetween(0, 1000),
         ];

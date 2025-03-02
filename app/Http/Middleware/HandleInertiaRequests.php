@@ -37,6 +37,27 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        
+        // Get locale from (in order of priority):
+        // 1. Request 'locale' query parameter
+        // 2. Session
+        // 3. X-Locale header
+        // 4. Default app locale
+        $locale = $request->query('locale'); 
+        
+        if (!$locale) {
+            $locale = $request->session()->get('locale');
+        }
+        
+        if (!$locale) {
+            $locale = $request->header('X-Locale', config('app.locale'));
+        }
+        
+        // Set application locale and save to session if it's a valid locale
+        if (in_array($locale, ['en', 'zh', 'zh-CN', 'ja', 'vi'])) {
+            app()->setLocale($locale);
+            $request->session()->put('locale', $locale);
+        }
 
         return [
             ...parent::share($request),
@@ -44,6 +65,17 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'locale' => app()->getLocale(),
+            'availableLocales' => [
+                'en' => 'English',
+                'zh' => '繁體中文',
+                'zh-CN' => '简体中文',
+                'ja' => '日本語',
+                'vi' => 'Tiếng Việt',
+            ],
+            'translations' => [
+                'blog' => trans('blog'),
             ],
         ];
     }

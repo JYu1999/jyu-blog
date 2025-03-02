@@ -22,6 +22,7 @@ interface Post {
   views: number;
   created_at: string;
   updated_at: string;
+  relative_updated_at: string;
   category: {
     id: number;
     name: string;
@@ -52,6 +53,10 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const navigateToPost = (slug: string) => {
+  window.location.href = route('blog.show', slug);
+};
 </script>
 
 <template>
@@ -83,8 +88,12 @@ const props = defineProps<Props>();
 
       <!-- Posts grid -->
       <div v-if="posts && posts.data && posts.data.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Card v-for="post in posts.data" :key="post.id" 
-            class="overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 rounded-xl border-none bg-card">
+        <Card 
+          v-for="post in posts.data" 
+          :key="post.id" 
+          class="overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 rounded-xl border-none bg-card cursor-pointer"
+          @click="navigateToPost(post.slug)"
+        >
           <!-- Featured image -->
           <div v-if="post.featured_image" class="h-56 overflow-hidden">
             <img :src="/storage/ + post.featured_image" :alt="post.title" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
@@ -99,9 +108,7 @@ const props = defineProps<Props>();
           <CardContent class="p-6 lg:p-8 flex-grow flex flex-col">
             <!-- Title -->
             <h2 class="text-2xl font-bold mb-3 text-card-foreground line-clamp-2">
-              <Link :href="route('blog.show', post.slug)" class="hover:text-primary transition-colors">
-                {{ post.title }}
-              </Link>
+              {{ post.title }}
             </h2>
 
             <!-- Summary -->
@@ -109,9 +116,9 @@ const props = defineProps<Props>();
               {{ post.summary || 'No summary available.' }}
             </p>
 
-            <!-- Meta info - Changed to display updated_at -->
+            <!-- Meta info - Using relative_updated_at from backend -->
             <div class="flex justify-between items-center text-sm mt-auto pt-4 border-t border-muted/60">
-              <span class="text-muted-foreground">Last updated: {{ new Date(post.updated_at).toLocaleDateString() }}</span>
+              <span class="text-muted-foreground">Last updated: {{ post.relative_updated_at }}</span>
               <span class="text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full text-xs">{{ post.views }} views</span>
             </div>
           </CardContent>

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Post extends Model
 {
     use HasFactory, SoftDeletes;
-    
+
     protected $fillable = [
         'title',
         'slug',
@@ -22,33 +22,73 @@ class Post extends Model
         'status',
         'views',
     ];
-    
+
     protected $casts = [
         'views' => 'integer',
+        'content_updated_at' => 'datetime',
     ];
-    
+
+    protected $appends = [
+        'relative_content_updated_at',
+    ];
+
+    // 定義哪些欄位更新時需要更新 content_updated_at
+    protected $contentFields = [
+        'title',
+        'content',
+        'summary',
+        'featured_image',
+        'category_id',
+        'status',
+    ];
+
+    public function getRelativeContentUpdatedAtAttribute()
+    {
+        return $this->content_updated_at ? $this->content_updated_at->diffForHumans() : null;
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
-    
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'post_tags');
     }
-    
+
     public function incrementViews(): void
     {
-        $this->increment('views');
+        // 不觸發更新 updated_at
+        $this->increment('views', 1, ['updated_at' => $this->updated_at]);
     }
-    
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
     }
-    
+
     public function scopeDrafts($query)
     {
         return $query->where('status', 'draft');
+    }
+
+    // 重寫父類別的 save 方法，使得內容相關欄位的更新會觸發 content_updated_at 的更新
+    public function save(array $options = [])
+    {
+        // 檢查更新的欄位是否包含內容相關欄位
+        if ($this->isDirty($this->contentFields)) {
+            $this->content_updated_at = now();
+        }
+
+        return parent::save($options);
+    }
+
+    // 第一次創建時，將 content_updated_at 設為當前時間
+    protected static function booted()
+    {
+        static::creating(function ($post) {
+            $post->content_updated_at = now();
+        });
     }
 }

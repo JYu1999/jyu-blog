@@ -31,6 +31,7 @@ interface Post {
   views: number;
   created_at: string;
   updated_at: string;
+  relative_updated_at: string;
   category: Category | null;
   tags: Tag[];
 }
@@ -119,9 +120,9 @@ onMounted(() => {
           {{ post.title }}
         </h1>
         
-        <!-- Meta info - Changed to display updated_at instead of created_at -->
+        <!-- Meta info - Using relative_updated_at from backend -->
         <div class="text-sm text-muted-foreground mb-8 bg-muted/50 inline-block px-4 py-1.5 rounded-full">
-          <span>Last updated: {{ new Date(post.updated_at).toLocaleDateString() }}</span>
+          <span>Last updated: {{ post.relative_updated_at }}</span>
           <span class="mx-2">•</span>
           <span>{{ post.views }} views</span>
         </div>

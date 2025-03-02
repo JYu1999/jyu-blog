@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('status', ['published', 'draft'])->default('draft');
             $table->integer('views')->default(0);
             $table->timestamps();
+            $table->timestamp('content_updated_at')->nullable();
             $table->softDeletes();
         });
     }

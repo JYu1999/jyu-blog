@@ -9,7 +9,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Setting;
 
 class Settings extends Page implements HasForms
 {
@@ -29,8 +29,8 @@ class Settings extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill([
-            'about_title' => Cache::get('about_title', 'About Me'),
-            'about_content' => Cache::get('about_content', ''),
+            'about_title' => Setting::getValue('about_title', 'About Me'),
+            'about_content' => Setting::getValue('about_content', ''),
         ]);
     }
     
@@ -52,8 +52,8 @@ class Settings extends Page implements HasForms
     {
         $data = $this->form->getState();
         
-        Cache::forever('about_title', $data['about_title']);
-        Cache::forever('about_content', $data['about_content']);
+        Setting::setValue('about_title', $data['about_title'], 'string', 'About page title');
+        Setting::setValue('about_content', $data['about_content'], 'string', 'About page content');
         
         Notification::make()
             ->title('Settings saved successfully')

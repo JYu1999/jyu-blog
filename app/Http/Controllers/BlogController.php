@@ -10,75 +10,36 @@ use Inertia\Inertia;
 
 class BlogController extends Controller
 {
+    /**
+     * Get common filter parameters from request
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function getFilterParams(Request $request): array
+    {
+        return [
+            'sort' => $request->input('sort', 'updated'),
+            'direction' => $request->input('direction', 'desc'),
+            'search' => $request->input('search', ''),
+            'view' => $request->input('view', 'gallery'),
+            'locale' => $request->input('locale', app()->getLocale()),
+        ];
+    }
+    
     public function index(Request $request)
     {
-        // Get filter parameters
-        $sort = $request->input('sort', 'updated');
-        $direction = $request->input('direction', 'desc');
-        $search = $request->input('search', '');
-        $view = $request->input('view', 'gallery');
-        $locale = $request->input('locale', app()->getLocale());
+        $filters = $this->getFilterParams($request);
         
-        $postsQuery = Post::with(['category'])
-            ->where('status', 'published');
-            
-        // Apply language filter
-        if ($locale) {
-            $postsQuery->where('locale', $locale);
-        }
-            
-        // Apply search if provided
-        if (!empty($search)) {
-            // Check if search is purely numeric (for ID search)
-            if (is_numeric($search)) {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('id', $search)
-                          ->orWhere('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            } else {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            }
-        }
-        
-        // Apply sorting with direction
-        $sortDirection = $direction === 'asc' ? 'asc' : 'desc';
-        
-        switch ($sort) {
-            case 'views':
-                $postsQuery->orderBy('views', $sortDirection);
-                break;
-            case 'created':
-                $postsQuery->orderBy('created_at', $sortDirection);
-                break;
-            case 'updated':
-            default:
-                if ($sortDirection === 'asc') {
-                    $postsQuery->orderBy('content_updated_at', 'asc')
-                             ->orderBy('created_at', 'asc');
-                } else {
-                    $postsQuery->orderBy('content_updated_at', 'desc')
-                             ->orderBy('created_at', 'desc');
-                }
-                break;
-        }
-        
-        $posts = $postsQuery->paginate(12)->withQueryString();
+        $posts = Post::with(['category'])
+            ->published()
+            ->applyBlogFilters($filters)
+            ->paginate(12)
+            ->withQueryString();
             
         return Inertia::render('Blog/Index', [
             'posts' => $posts,
-            'filters' => [
-                'sort' => $sort,
-                'direction' => $direction,
-                'search' => $search,
-                'view' => $view,
-                'locale' => $locale,
-            ],
+            'filters' => $filters,
             'availableLocales' => config('app.supported_locales'),
         ]);
     }
@@ -100,76 +61,19 @@ class BlogController extends Controller
     public function byCategory($slug, Request $request)
     {
         $category = Category::where('slug', $slug)->firstOrFail();
+        $filters = $this->getFilterParams($request);
         
-        // Get filter parameters
-        $sort = $request->input('sort', 'updated');
-        $direction = $request->input('direction', 'desc');
-        $search = $request->input('search', '');
-        $view = $request->input('view', 'gallery');
-        $locale = $request->input('locale', app()->getLocale());
-        
-        $postsQuery = Post::with(['category'])
+        $posts = Post::with(['category'])
+            ->published()
             ->where('category_id', $category->id)
-            ->where('status', 'published');
-            
-        // Apply language filter
-        if ($locale) {
-            $postsQuery->where('locale', $locale);
-        }
-            
-        // Apply search if provided
-        if (!empty($search)) {
-            // Check if search is purely numeric (for ID search)
-            if (is_numeric($search)) {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('id', $search)
-                          ->orWhere('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            } else {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            }
-        }
-        
-        // Apply sorting with direction
-        $sortDirection = $direction === 'asc' ? 'asc' : 'desc';
-        
-        switch ($sort) {
-            case 'views':
-                $postsQuery->orderBy('views', $sortDirection);
-                break;
-            case 'created':
-                $postsQuery->orderBy('created_at', $sortDirection);
-                break;
-            case 'updated':
-            default:
-                if ($sortDirection === 'asc') {
-                    $postsQuery->orderBy('content_updated_at', 'asc')
-                             ->orderBy('created_at', 'asc');
-                } else {
-                    $postsQuery->orderBy('content_updated_at', 'desc')
-                             ->orderBy('created_at', 'desc');
-                }
-                break;
-        }
-        
-        $posts = $postsQuery->paginate(12)->withQueryString();
+            ->applyBlogFilters($filters)
+            ->paginate(12)
+            ->withQueryString();
             
         return Inertia::render('Blog/Category', [
             'category' => $category,
             'posts' => $posts,
-            'filters' => [
-                'sort' => $sort,
-                'direction' => $direction,
-                'search' => $search,
-                'view' => $view,
-                'locale' => $locale,
-            ],
+            'filters' => $filters,
             'availableLocales' => config('app.supported_locales'),
         ]);
     }
@@ -177,76 +81,19 @@ class BlogController extends Controller
     public function byTag($slug, Request $request)
     {
         $tag = Tag::where('slug', $slug)->firstOrFail();
+        $filters = $this->getFilterParams($request);
         
-        // Get filter parameters
-        $sort = $request->input('sort', 'updated');
-        $direction = $request->input('direction', 'desc');
-        $search = $request->input('search', '');
-        $view = $request->input('view', 'gallery');
-        $locale = $request->input('locale', app()->getLocale());
-        
-        $postsQuery = $tag->posts()
+        $posts = $tag->posts()
             ->with(['category'])
-            ->where('status', 'published');
-            
-        // Apply language filter
-        if ($locale) {
-            $postsQuery->where('locale', $locale);
-        }
-            
-        // Apply search if provided
-        if (!empty($search)) {
-            // Check if search is purely numeric (for ID search)
-            if (is_numeric($search)) {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('id', $search)
-                          ->orWhere('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            } else {
-                $postsQuery->where(function($query) use ($search) {
-                    $query->where('title', 'like', "%{$search}%")
-                          ->orWhere('content', 'like', "%{$search}%")
-                          ->orWhere('summary', 'like', "%{$search}%");
-                });
-            }
-        }
-        
-        // Apply sorting with direction
-        $sortDirection = $direction === 'asc' ? 'asc' : 'desc';
-        
-        switch ($sort) {
-            case 'views':
-                $postsQuery->orderBy('views', $sortDirection);
-                break;
-            case 'created':
-                $postsQuery->orderBy('created_at', $sortDirection);
-                break;
-            case 'updated':
-            default:
-                if ($sortDirection === 'asc') {
-                    $postsQuery->orderBy('content_updated_at', 'asc')
-                             ->orderBy('created_at', 'asc');
-                } else {
-                    $postsQuery->orderBy('content_updated_at', 'desc')
-                             ->orderBy('created_at', 'desc');
-                }
-                break;
-        }
-        
-        $posts = $postsQuery->paginate(12)->withQueryString();
+            ->published()
+            ->applyBlogFilters($filters)
+            ->paginate(12)
+            ->withQueryString();
             
         return Inertia::render('Blog/Tag', [
             'tag' => $tag,
             'posts' => $posts,
-            'filters' => [
-                'sort' => $sort,
-                'direction' => $direction,
-                'search' => $search,
-                'view' => $view,
-                'locale' => $locale,
-            ],
+            'filters' => $filters,
             'availableLocales' => config('app.supported_locales'),
         ]);
     }

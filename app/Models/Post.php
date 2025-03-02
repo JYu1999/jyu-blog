@@ -87,6 +87,68 @@ class Post extends Model
         return $query->where('locale', $locale);
     }
     
+    /**
+     * Apply search filters to the query
+     */
+    public function scopeSearch($query, $search)
+    {
+        if (empty($search)) {
+            return $query;
+        }
+        
+        // Check if search is purely numeric (for ID search)
+        if (is_numeric($search)) {
+            return $query->where(function($query) use ($search) {
+                $query->where('id', $search)
+                    ->orWhere('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhere('summary', 'like', "%{$search}%");
+            });
+        } else {
+            return $query->where(function($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhere('summary', 'like', "%{$search}%");
+            });
+        }
+    }
+    
+    /**
+     * Apply sorting to the query
+     */
+    public function scopeSort($query, $sort = 'updated', $direction = 'desc')
+    {
+        $sortDirection = $direction === 'asc' ? 'asc' : 'desc';
+        
+        switch ($sort) {
+            case 'views':
+                return $query->orderBy('views', $sortDirection);
+            case 'created':
+                return $query->orderBy('created_at', $sortDirection);
+            case 'updated':
+            default:
+                if ($sortDirection === 'asc') {
+                    return $query->orderBy('content_updated_at', 'asc')
+                                ->orderBy('created_at', 'asc');
+                } else {
+                    return $query->orderBy('content_updated_at', 'desc')
+                                ->orderBy('created_at', 'desc');
+                }
+        }
+    }
+    
+    /**
+     * Apply common filters used across blog pages
+     */
+    public function scopeApplyBlogFilters($query, $filters)
+    {
+        return $query->when(isset($filters['locale']), function($q) use ($filters) {
+                    return $q->locale($filters['locale']);
+                })
+                ->search($filters['search'] ?? '')
+                ->sort($filters['sort'] ?? 'updated', $filters['direction'] ?? 'desc');
+    }
+    
     public function translations()
     {
         return $this->hasMany(Post::class, 'original_post_id');

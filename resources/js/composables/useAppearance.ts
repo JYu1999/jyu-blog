@@ -21,7 +21,19 @@ const handleSystemThemeChange = () => {
 export function initializeTheme() {
     // Initialize theme from saved preference or default to system...
     const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-    updateTheme(savedAppearance || 'system');
+    
+    // Also check for legacy darkMode setting for backwards compatibility
+    if (!savedAppearance && localStorage.getItem('darkMode') !== null) {
+        const isDark = localStorage.getItem('darkMode') === 'true';
+        const newAppearance: Appearance = isDark ? 'dark' : 'light';
+        localStorage.setItem('appearance', newAppearance);
+        updateTheme(newAppearance);
+        
+        // Remove legacy setting
+        localStorage.removeItem('darkMode');
+    } else {
+        updateTheme(savedAppearance || 'system');
+    }
 
     // Set up system theme change listener...
     mediaQuery.addEventListener('change', handleSystemThemeChange);
